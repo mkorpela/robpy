@@ -105,6 +105,7 @@ def _build_rf_suite(datasources, settings, tests):
     rf_test_to_actual = {}
     for actual_test in tests:
         rf_test = suite.tests.create()
+        rf_test.name = actual_test.__name__
         rf_test.tags = actual_test.tags
         rf_test_to_actual[rf_test] = actual_test
     suite.configure(**settings.suite_config)
