@@ -14,12 +14,25 @@ def failing():
     print 'this fails'
     1/0
 
-@test
-def t1():
+@test(tags=['foo', 'bar'])
+def test_combined():
     kw1()
     kw2()
     failing()
 
 @test
-def t2():
+def test_failing_from_keyword():
+    failing()
+
+@test
+def test_failing_from_test():
+    1/0
+
+@test
+def test_keyword_call():
     kw2()
+
+
+@test
+def test_print_without_keywords():
+    print 'hello test'

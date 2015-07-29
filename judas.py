@@ -30,9 +30,13 @@ def kw(f):
                    raise
     return func
 
-def test(f):
-    f.is_test = True
-    return f
+def test(*args, **kwargs):
+    def test_decorator(f):
+        f.is_test = True
+        return f
+    if not kwargs and args and len(args) == 1:
+        return test_decorator(args[0])
+    return test_decorator
 
 class JudasRunner(Runner):
 
