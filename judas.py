@@ -122,6 +122,7 @@ def execute(args):
             keys.add(k)
     for k in keys:
         del opts[k]
+    opts['dotted'] = True
     runner(datasources, **opts)
     ResultWriter(opts.get('output', 'output.xml')).write_results(settings=None, **opts)
 
