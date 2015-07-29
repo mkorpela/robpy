@@ -55,3 +55,9 @@ docs/_build/
 
 # PyBuilder
 target/
+
+.idea/
+
+log.html
+output.xml
+report.html
