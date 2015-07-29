@@ -1,4 +1,4 @@
-
+import pkgutil
 import robot.running.context as ctx
 from robot.api import TestSuite
 from robot.running.keywordrunner import StatusReporter, ErrorDetails, HandlerExecutionFailed
@@ -77,7 +77,7 @@ class JudasRunner(Runner):
 
 
 def runner(datasources, **options):
-    tests = _list_tests(datasources)
+    tests = _tests(datasources)
     settings = RobotSettings(options)
     rf_test_to_actual, suite = _build_rf_suite(datasources, settings, tests)
     LOGGER.register_console_logger(**settings.console_output_config)
@@ -91,26 +91,29 @@ def runner(datasources, **options):
     return runner.result
 
 
-def _list_tests(datasources):
-    tests = []
-    module = __import__(datasources[0])
-    for item_name in dir(module):
-        item = getattr(module, item_name)
-        if hasattr(item, 'is_test') and getattr(item, 'is_test'):
-            tests.append(item)
-    return tests
+def _tests(datasources):
+    for loader, module_name, is_pkg in  pkgutil.iter_modules([datasources[0]]):
+        module = loader.find_module(module_name).load_module(module_name)
+        for item_name in dir(module):
+            item = getattr(module, item_name)
+            if hasattr(item, 'is_test') and getattr(item, 'is_test'):
+                yield item, module_name
 
 
 def _build_rf_suite(datasources, settings, tests):
-    suite = TestSuite(datasources[0])
+    parent_suite = TestSuite(datasources[0])
     rf_test_to_actual = {}
-    for actual_test in tests:
-        rf_test = suite.tests.create()
+    current_suite = parent_suite
+    for actual_test, module_name in tests:
+        if current_suite.name != module_name:
+            current_suite = parent_suite.suites.create()
+            current_suite.name = module_name
+        rf_test = current_suite.tests.create()
         rf_test.name = actual_test.__name__
         rf_test.tags = actual_test.tags
         rf_test_to_actual[rf_test] = actual_test
-    suite.configure(**settings.suite_config)
-    return rf_test_to_actual, suite
+    parent_suite.configure(**settings.suite_config)
+    return rf_test_to_actual, parent_suite
 
 
 def execute(args):
