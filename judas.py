@@ -33,6 +33,7 @@ def kw(f):
 def test(*args, **kwargs):
     def test_decorator(f):
         f.is_test = True
+        f.tags = kwargs['tags'] if kwargs and 'tags' in kwargs else ()
         return f
     if not kwargs and args and len(args) == 1:
         return test_decorator(args[0])
@@ -51,7 +52,7 @@ class JudasRunner(Runner):
         self._executed_tests[test.name] = True
         result = self._suite.tests.create(name=t.__name__,
                                           doc=t.__doc__,
-                                          tags=test.tags,
+                                          tags=t.tags,
                                           starttime=get_timestamp(),
                                           timeout=self._get_timeout(test))
         status = TestStatus(self._suite_status, result.critical)
