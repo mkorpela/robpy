@@ -47,8 +47,7 @@ class JudasRunner(Runner):
 
     @overrides
     def visit_test(self, test):
-        t = self._actual_tests[0]
-        self._actual_tests = self._actual_tests[1:]
+        t = self._actual_tests[test]
         self._executed_tests[test.name] = True
         result = self._suite.tests.create(name=t.__name__,
                                           doc=t.__doc__,
@@ -77,27 +76,39 @@ class JudasRunner(Runner):
 
 
 def runner(datasources, **options):
+    tests = _list_tests(datasources)
+    settings = RobotSettings(options)
+    rf_test_to_actual, suite = _build_rf_suite(datasources, settings, tests)
+    LOGGER.register_console_logger(**settings.console_output_config)
+    with pyloggingconf.robot_handler_enabled(settings.log_level):
+        with STOP_SIGNAL_MONITOR:
+            IMPORTER.reset()
+            output = Output(settings)
+            runner = JudasRunner(rf_test_to_actual, output, settings)
+            suite.visit(runner)
+        output.close(runner.result)
+    return runner.result
+
+
+def _list_tests(datasources):
     tests = []
     module = __import__(datasources[0])
     for item_name in dir(module):
         item = getattr(module, item_name)
         if hasattr(item, 'is_test') and getattr(item, 'is_test'):
             tests.append(item)
+    return tests
+
+
+def _build_rf_suite(datasources, settings, tests):
     suite = TestSuite(datasources[0])
+    rf_test_to_actual = {}
     for actual_test in tests:
         rf_test = suite.tests.create()
         rf_test.tags = actual_test.tags
-    settings = RobotSettings(options)
+        rf_test_to_actual[rf_test] = actual_test
     suite.configure(**settings.suite_config)
-    LOGGER.register_console_logger(**settings.console_output_config)
-    with pyloggingconf.robot_handler_enabled(settings.log_level):
-        with STOP_SIGNAL_MONITOR:
-            IMPORTER.reset()
-            output = Output(settings)
-            runner = JudasRunner(tests, output, settings)
-            suite.visit(runner)
-        output.close(runner.result)
-    return runner.result
+    return rf_test_to_actual, suite
 
 
 def execute(args):
