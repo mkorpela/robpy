@@ -43,12 +43,12 @@ class JudasRunner(Runner):
 
     def __init__(self, tests, *other):
         Runner.__init__(self, *other)
-        self._my_tests = tests[:]
+        self._actual_tests = tests
 
     @overrides
     def visit_test(self, test):
-        t = self._my_tests[0]
-        self._my_tests = self._my_tests[1:]
+        t = self._actual_tests[0]
+        self._actual_tests = self._actual_tests[1:]
         self._executed_tests[test.name] = True
         result = self._suite.tests.create(name=t.__name__,
                                           doc=t.__doc__,
@@ -84,9 +84,11 @@ def runner(datasources, **options):
         if hasattr(item, 'is_test') and getattr(item, 'is_test'):
             tests.append(item)
     suite = TestSuite(datasources[0])
-    for _ in tests:
-        suite.tests.create()
+    for actual_test in tests:
+        rf_test = suite.tests.create()
+        rf_test.tags = actual_test.tags
     settings = RobotSettings(options)
+    suite.configure(**settings.suite_config)
     LOGGER.register_console_logger(**settings.console_output_config)
     with pyloggingconf.robot_handler_enabled(settings.log_level):
         with STOP_SIGNAL_MONITOR:
