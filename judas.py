@@ -58,7 +58,8 @@ class JudasRunner(Runner):
         self._context.start_test(result)
         self._output.start_test(ModelCombiner(result, test))
         try:
-            t()
+            with OutputCapturer():
+                t()
         except PassExecution as exception:
             err = exception.earlier_failures
             if err:
