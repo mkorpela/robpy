@@ -26,6 +26,7 @@ def test_failing_from_keyword():
 
 @test
 def test_failing_from_test():
+    print 'i am failing'
     1/0
 
 @test
