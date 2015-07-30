@@ -116,7 +116,7 @@ def _build_rf_suite(datasources, settings, tests):
     return rf_test_to_actual, parent_suite
 
 
-def execute(args):
+def main(args):
     from robot.api import ResultWriter
     opts, datasources = ArgumentParser(USAGE).parse_args(args)
     keys = set()
@@ -131,4 +131,4 @@ def execute(args):
 
 
 if __name__ == '__main__' :
-    execute(sys.argv[1:])
+    main(sys.argv[1:])
